@@ -1,22 +1,30 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <!-- 宣告文字編碼為 UTF-8，讓中文顯示正常 -->
   <meta charset="UTF-8" />
+  <!-- 讓頁面在手機上自動縮放，不會變很小 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 瀏覽器分頁上顯示的標題 -->
   <title>我的書單分析</title>
+
   <style>
+    /* ── 全域重置：清除所有元素預設的外距與內距，讓版面更好控制 ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── 整個頁面的基本樣式 ── */
     body {
+      /* 優先使用蘋果繁中字型，其次微軟正黑，最後 Noto，都沒有就用系統預設 */
       font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
-      background: #f5f2ec;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 48px 16px;
+      background: #f5f2ec;   /* 米白色背景 */
+      min-height: 100vh;     /* 頁面至少撐滿整個視窗高度 */
+      display: flex;         /* 使用 Flexbox 排版 */
+      justify-content: center;  /* 水平置中 */
+      align-items: flex-start;  /* 垂直從頂部開始 */
+      padding: 48px 16px;    /* 上下 48px、左右 16px 的留白 */
     }
 
+    /* ── 內容容器：限制最大寬度，讓版面在大螢幕不會過寬 ── */
     .container {
       width: 100%;
       max-width: 580px;
@@ -24,92 +32,106 @@
 
     /* ── 標題區 ── */
     .header {
-      margin-bottom: 32px;
+      margin-bottom: 32px;   /* 與下方按鈕之間的間距 */
     }
     .header h1 {
       font-size: 26px;
-      font-weight: 700;
+      font-weight: 700;      /* 粗體 */
       color: #1a1a1a;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.02em; /* 字距稍微拉開，看起來更舒服 */
     }
     .header p {
       font-size: 14px;
-      color: #888;
+      color: #888;           /* 灰色副標題 */
       margin-top: 6px;
     }
 
-    /* ── 分析按鈕 ── */
+    /* ── 三個分析按鈕的清單容器 ── */
     .btn-list {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      flex-direction: column; /* 按鈕垂直排列 */
+      gap: 12px;              /* 按鈕之間的間距 */
       margin-bottom: 24px;
     }
 
+    /* ── 每一個分析按鈕的樣式 ── */
     .action-btn {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: space-between; /* 文字靠左、箭頭靠右 */
       background: #fff;
       border: none;
-      border-radius: 14px;
+      border-radius: 14px;   /* 圓角 */
       padding: 20px 22px;
       font-size: 16px;
       font-weight: 500;
       color: #1a1a1a;
-      cursor: pointer;
+      cursor: pointer;       /* 滑鼠移上去變成手指圖示 */
+      /* 滑鼠懸停時的過渡動畫，讓互動更順滑 */
       transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); /* 淡淡的陰影 */
       text-align: left;
       letter-spacing: 0.01em;
     }
+    /* 滑鼠移上去時：背景變深、陰影加重、按鈕稍微上移 */
     .action-btn:hover {
       background: #f0ece3;
       box-shadow: 0 3px 12px rgba(0,0,0,0.10);
       transform: translateY(-1px);
     }
+    /* 按下去時：回到原位、背景再深一點 */
     .action-btn:active {
       transform: translateY(0);
       background: #e8e3d8;
     }
+    /* loading 狀態（等待 API 回傳中）：文字變灰、禁止再次點擊 */
     .action-btn.loading {
       color: #aaa;
       pointer-events: none;
     }
+
+    /* ── 按鈕右側的箭頭「→」 ── */
     .action-btn .arrow {
       font-size: 18px;
       color: #999;
       transition: transform 0.18s;
     }
+    /* 滑鼠移上去時箭頭往右移動一點 */
     .action-btn:hover .arrow {
       transform: translateX(4px);
       color: #555;
     }
+    /* loading 中隱藏箭頭（改顯示旋轉圈圈） */
     .action-btn.loading .arrow {
       display: none;
     }
+
+    /* ── 載入旋轉圈圈（等待 API 時顯示） ── */
     .spinner {
-      display: none;
+      display: none;           /* 預設隱藏 */
       width: 18px; height: 18px;
       border: 2px solid #ccc;
-      border-top-color: #555;
+      border-top-color: #555;  /* 只有上方那段有顏色，其餘透明，形成旋轉感 */
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.7s linear infinite; /* 持續旋轉動畫 */
     }
+    /* loading 狀態下才顯示圈圈 */
     .action-btn.loading .spinner { display: block; }
+    /* 定義旋轉動畫：從 0 轉到 360 度 */
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── 結果區 ── */
+    /* ── 分析結果顯示區 ── */
     .result-box {
       background: #f0ece3;
       border-radius: 14px;
       padding: 22px 24px;
-      min-height: 120px;
-      max-height: 60vh;
-      overflow-y: auto;
+      min-height: 300px;       /* 最小高度，避免空白時區塊太小 */
+      max-height: 520px;       /* 最大高度，超過則出現捲軸 */
+      overflow-y: auto;        /* 內容超出時可垂直捲動 */
       transition: all 0.25s ease;
     }
 
+    /* 空白狀態（尚未分析）：顯示置中的圖示與提示文字 */
     .result-box.empty {
       display: flex;
       flex-direction: column;
@@ -121,11 +143,13 @@
     .result-box.empty .icon { font-size: 28px; }
     .result-box.empty p { font-size: 14px; }
 
+    /* 有結果時：白底 + 陰影，視覺上凸顯 */
     .result-box.has-result {
       background: #fff;
       box-shadow: 0 2px 10px rgba(0,0,0,0.07);
     }
 
+    /* 結果上方的小標籤（例如「📚 閱讀性格分析」） */
     .result-label {
       font-size: 12px;
       font-weight: 600;
@@ -135,19 +159,21 @@
       margin-bottom: 10px;
     }
 
+    /* 分析結果的正文文字 */
     .result-text {
       font-size: 15px;
-      line-height: 1.85;
+      line-height: 1.85;       /* 行高寬鬆，讀起來不壓迫 */
       color: #333;
-      white-space: pre-wrap;
-      word-break: break-word;
+      white-space: pre-wrap;   /* 保留 API 回傳文字中的換行 */
+      word-break: break-word;  /* 避免長字串超出邊界 */
     }
 
+    /* 錯誤狀態：文字顯示紅色 */
     .result-box.error .result-text {
       color: #c0392b;
     }
 
-    /* ── 頁尾提示 ── */
+    /* ── 頁尾小字 ── */
     .footer-note {
       margin-top: 20px;
       font-size: 12px;
@@ -159,18 +185,22 @@
 </head>
 <body>
 
+<!-- 整體內容容器，置中顯示 -->
 <div class="container">
 
+  <!-- 頁面標題與說明文字 -->
   <div class="header">
     <h1>我的書單分析</h1>
     <p>選擇一個分析，LLM 會幫你解讀書單</p>
   </div>
 
+  <!-- 三個分析功能按鈕 -->
   <div class="btn-list">
+    <!-- 點擊時呼叫 analyze()，傳入對應的 action 名稱與按鈕本身 -->
     <button class="action-btn" onclick="analyze('analyzePersonality', this)">
       <span>分析我的閱讀性格</span>
       <span class="arrow">→</span>
-      <div class="spinner"></div>
+      <div class="spinner"></div> <!-- 等待中旋轉圈圈 -->
     </button>
 
     <button class="action-btn" onclick="analyze('recommend', this)">
@@ -186,11 +216,13 @@
     </button>
   </div>
 
+  <!-- 分析結果顯示區，初始為空白提示狀態 -->
   <div class="result-box empty" id="resultBox">
     <div class="icon">📖</div>
     <p>點擊上方按鈕<br>LLM 分析結果會顯示在這裡</p>
   </div>
 
+  <!-- 頁尾說明 -->
   <p class="footer-note">
     資料來源：Google 試算表「書單」工作表 ・ 由 Gemini 驅動
   </p>
@@ -204,65 +236,83 @@
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbyAFu6FGWpkQVoHwBfYJrwsU-K_-Af27ibCMAJU1kjn-j5JWPeKBj65nCxlhKKYYIk7/exec';
   // ══════════════════════════════════════════════════════
 
+  // 每種 action 對應的顯示標籤文字
   const LABEL = {
     analyzePersonality: '📚 閱讀性格分析',
     recommend:          '🔖 下一本書推薦',
     findBlindSpots:     '🔍 閱讀盲點分析'
   };
 
+  // 記錄目前正在執行的按鈕，防止同時送出多個請求
   let activeBtn = null;
 
+  // 主要分析函式：呼叫 Google Apps Script 後端，取得 Gemini 分析結果
   async function analyze(action, btn) {
-    // 防止重複點擊
+    // 如果已有請求進行中，直接忽略這次點擊
     if (activeBtn) return;
     activeBtn = btn;
 
+    // 讓按鈕進入 loading 狀態（顯示旋轉圈圈、禁止點擊）
     btn.classList.add('loading');
+    // 結果區改顯示「分析中」畫面
     showEmpty('loading');
 
     try {
+      // 組合請求網址，帶入 action 參數
       const url      = GAS_URL + '?action=' + action;
+      // 用 fetch 發出 HTTP GET 請求，await 等待回應
       const response = await fetch(url);
 
+      // 如果 HTTP 狀態碼不是 200，拋出錯誤
       if (!response.ok) throw new Error('HTTP ' + response.status);
 
+      // 把回應的 JSON 解析成 JavaScript 物件
       const data = await response.json();
 
+      // 判斷後端回傳的是錯誤訊息還是正常結果
       if (data.error) {
         showError(data.error);
       } else {
         showResult(LABEL[action], data.result);
       }
     } catch (err) {
+      // 網路錯誤或解析失敗時顯示錯誤訊息
       showError('連線失敗，請確認 GAS 網址是否正確。\n錯誤：' + err.message);
     } finally {
+      // 不管成功或失敗，最後都要解除 loading 狀態
       btn.classList.remove('loading');
       activeBtn = null;
     }
   }
 
+  // 顯示空白或載入中的狀態
   function showEmpty(state) {
     const box = document.getElementById('resultBox');
     box.className = 'result-box empty';
     if (state === 'loading') {
+      // 載入中：顯示沙漏圖示與提示文字
       box.innerHTML = `
         <div class="icon">⏳</div>
         <p>正在分析中，請稍候…</p>`;
     } else {
+      // 預設空白狀態
       box.innerHTML = `
         <div class="icon">📖</div>
         <p>點擊上方按鈕<br>LLM 分析結果會顯示在這裡</p>`;
     }
   }
 
+  // 顯示正常的分析結果
   function showResult(label, text) {
     const box = document.getElementById('resultBox');
     box.className = 'result-box has-result';
+    // 顯示標籤（例如「📚 閱讀性格分析」）與內文
     box.innerHTML = `
       <div class="result-label">${label}</div>
       <div class="result-text">${escapeHtml(text)}</div>`;
   }
 
+  // 顯示錯誤訊息（紅字）
   function showError(msg) {
     const box = document.getElementById('resultBox');
     box.className = 'result-box has-result error';
@@ -271,11 +321,13 @@
       <div class="result-text">${escapeHtml(msg)}</div>`;
   }
 
+  // 安全處理函式：把特殊字元轉換成 HTML 實體
+  // 防止 API 回傳內容中若有 <、> 等符號，破壞頁面結構（XSS 防護）
   function escapeHtml(str) {
     return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+      .replace(/&/g, '&amp;')   // & → &amp;
+      .replace(/</g, '&lt;')    // < → &lt;
+      .replace(/>/g, '&gt;');   // > → &gt;
   }
 </script>
 
