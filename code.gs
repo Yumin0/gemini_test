@@ -6,7 +6,7 @@
 // ============================================================
 
 // ▼▼▼ 填入你的 Gemini API Key ▼▼▼
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+const GEMINI_API_KEY = 'AIzaSyCpJLTYfE84zttQZBhwmcRB94j6FW_FP0Q';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 const SHEET_NAME    = '書單';          // 工作表名稱，請勿修改（與試算表一致）
